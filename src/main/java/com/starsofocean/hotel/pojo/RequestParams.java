@@ -8,4 +8,9 @@ public class RequestParams{
     private Integer page;
     private Integer size;
     private String sortBy;
+    private String city;
+    private String brand;
+    private String starName;
+    private Integer minPrice;
+    private Integer maxPrice;
 }
