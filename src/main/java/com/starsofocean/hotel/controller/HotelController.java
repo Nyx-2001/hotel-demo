@@ -1,6 +1,6 @@
 package com.starsofocean.hotel.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import com.starsofocean.hotel.pojo.PageResult;
 import com.starsofocean.hotel.pojo.RequestParams;
 import com.starsofocean.hotel.service.IHotelService;
