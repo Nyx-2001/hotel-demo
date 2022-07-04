@@ -8,12 +8,15 @@ import com.starsofocean.hotel.pojo.PageResult;
 import com.starsofocean.hotel.pojo.RequestParams;
 import com.starsofocean.hotel.service.IHotelService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
@@ -44,6 +47,7 @@ import java.util.Map;
 
 @Service
 public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHotelService {
+
     @Resource
     private RestHighLevelClient client;
 
@@ -72,7 +76,6 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
                         .order(SortOrder.ASC)
                         .unit(DistanceUnit.KILOMETERS));
             }
-
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             return handleResponse(response);
         } catch (IOException e) {
@@ -112,7 +115,11 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
         }
     }
 
-    //自动搜索补全
+    /**
+     * 自动搜索补全
+     * @param key
+     * @return
+     */
     @Override
     public List<String> getSuggestions(String key) {
         try {
@@ -141,6 +148,44 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
                 list.add(text);
             }
             return list;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * elasticsearch数据的新增和修改
+     * @param id
+     */
+    @Override
+    public void insertById(Long id) {
+        try {
+            //根据id查数据
+            Hotel hotel = getById(id);
+            //转换为文档数据
+            HotelDoc hotelDoc=new HotelDoc(hotel);
+            //准备request对象
+            IndexRequest request = new IndexRequest("hotel").id(hotel.getId().toString());
+            //准备json文档
+            request.source(JSON.toJSONString(hotelDoc), XContentType.JSON);
+            //发送请求
+            client.index(request,RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * elasticsearch数据的删除
+     * @param id
+     */
+    @Override
+    public void deleteById(Long id) {
+        try {
+            //准备request
+            DeleteRequest request = new DeleteRequest("hotel", id.toString());
+            //发送请求
+            client.delete(request,RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
